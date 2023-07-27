@@ -1,0 +1,39 @@
+Handler: Es una clase en Android que permite programar y ejecutar acciones (tareas) en un hilo
+específico. Un Handler está asociado a un Looper y se utiliza para enviar mensajes y tareas al
+Looper para que los procese.
+
+Looper: Es una clase que permite a un hilo mantenerse activo y ejecutar tareas en bucle hasta
+que se lo detenga. Cada hilo que ejecuta tareas en un Looper tiene su propio bucle de mensajes.
+
+Looper.getMainLooper(): Es un método estático que devuelve el Looper del hilo principal de la
+ aplicación (también conocido como hilo principal de la interfaz de usuario). El hilo principal
+ es donde se ejecuta la interfaz de usuario y donde ocurren la mayoría de las interacciones con
+  los elementos de la interfaz de usuario.
+
+private var handler = Handler(Looper.getMainLooper()): Aquí se crea una nueva instancia de Handler
+que está asociada al Looper del hilo principal. Esto significa que cualquier tarea que se envíe a
+este Handler será procesada en el hilo principal, lo que es útil para realizar operaciones relacionadas
+con la interfaz de usuario.
+
+El uso más común de un Handler como este es para realizar actualizaciones en la interfaz de usuario
+desde un hilo secundario. Por ejemplo, si tienes un hilo secundario que realiza una tarea en segundo
+ plano y necesita actualizar una vista en la interfaz de usuario con el resultado, puedes usar este
+ Handler para enviar un mensaje desde el hilo secundario al hilo principal y actualizar la vista de
+ manera segura en el hilo principal.
+
+ * Propiedades duration y delay:
+     private var duration = 0L: Es una propiedad que representa la duración del temporizador.
+     Inicialmente, está configurada a 0.
+
+     private var delay = 100L: Es una propiedad que representa el intervalo de tiempo en milisegundos
+     entre las ejecuciones del temporizador. Inicialmente, está configurada a 100 milisegundos (0.1 segundos).
+
+     Bloque init:
+     init { ... }: Este bloque se ejecuta cuando se crea una instancia de la clase Timer.
+     runnable = Runnable { ... }: Aquí se inicializa la propiedad runnable con una nueva instancia de Runnable.
+     El cuerpo del Runnable: Cuando el Runnable se ejecute, incrementará la duration con el valor del delay y
+     luego se volverá a programar para ejecutarse nuevamente después de delay milisegundos utilizando el Handler.
+
+     *interface OnTimerTickListener { ... }: Se ha agregado una interfaz llamada OnTimerTickListener, que se
+     utilizará para notificar el progreso del temporizador a otras partes de la aplicación. La interfaz contiene
+      un método onTimerTick() que tomará un parámetro duration de tipo String
