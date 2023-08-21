@@ -34,7 +34,7 @@ class Adapter(var records : ArrayList<AudioRecord>,var listener: OnItemClickList
 
         override fun onClick(p0: View?) {
             val position = adapterPosition
-            if(position != RecyclerView.NO_POSITION){
+            if(position != RecyclerView.NO_POSITION){tvFilename
                 listener.onItemClickListener(position)
             }
         }

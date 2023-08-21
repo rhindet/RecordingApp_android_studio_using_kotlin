@@ -25,26 +25,27 @@ import kotlinx.coroutines.launch
 
 class GalleryActivity :AppCompatActivity(),OnItemClickListener{
 
+
     private lateinit var records : ArrayList<AudioRecord>
-    private lateinit var  mAdapter:Adapter
-    private lateinit var  db:AppDatabase
-    private lateinit var searchInput : TextInputEditText
-    private lateinit var bottomSheet : LinearLayout
-    private lateinit var bottomSheetBehavior: BottomSheetBehavior<LinearLayout>
+    private lateinit var mAdapter : Adapter
+    private lateinit var db : AppDatabase
 
     private var allChecked = false
 
-    private lateinit var btnRename : ImageButton
-    private lateinit var btnDelete : ImageButton
-
-    private lateinit var tvRename : TextView
-    private lateinit var tvDelete  : TextView
-
     private lateinit var toolbar: MaterialToolbar
 
-    private lateinit var editBar :View
-    private lateinit var  btnClose:ImageButton
-    private lateinit var  btnSelectAll:ImageButton
+    private lateinit var editBar: View
+    private lateinit var btnClose: ImageButton
+    private lateinit var btnSelectAll: ImageButton
+
+    private lateinit var searchInput : TextInputEditText
+    private lateinit var bottomSheet: LinearLayout
+    private lateinit var bottomSheetBehavior: BottomSheetBehavior<LinearLayout>
+
+    private lateinit var btnRename : ImageButton
+    private lateinit var btnDelete : ImageButton
+    private lateinit var tvRename : TextView
+    private lateinit var tvDelete : TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,8 +54,8 @@ class GalleryActivity :AppCompatActivity(),OnItemClickListener{
         toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        toolbar.setNavigationOnClickListener{
+        supportActionBar?.setDisplayShowHomeEnabled(true)
+        toolbar.setNavigationOnClickListener {
             onBackPressed()
         }
 
@@ -79,38 +80,32 @@ class GalleryActivity :AppCompatActivity(),OnItemClickListener{
             "audioRecords"
         ).build()
 
-
-
-        mAdapter = Adapter(records , this)
+        mAdapter = Adapter(records, this)
 
         recyclerview.apply {
             adapter = mAdapter
             layoutManager = LinearLayoutManager(context)
         }
-        fetchALL()
+
+        fetchAll()
 
         searchInput = findViewById(R.id.search_input)
-        searchInput.addTextChangedListener(object:TextWatcher{
-            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-
-            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
-              var query = p0.toString()
-               searchDatabase(query)
+        searchInput.addTextChangedListener(object: TextWatcher{
+            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
             }
 
-            override fun afterTextChanged(p0: Editable?) {}
+            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
+                var query = p0.toString()
+                searchDatabase(query)
+            }
+
+            override fun afterTextChanged(p0: Editable?) {
+            }
 
         })
 
         btnClose.setOnClickListener {
-            supportActionBar?.setDisplayHomeAsUpEnabled(true)
-            supportActionBar?.setDisplayHomeAsUpEnabled(true)
-
-            editBar.visibility = View.GONE
-
-            bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
-            records.map{it.isChecked = false}
-            mAdapter.setEditMode(false)
+            leaveEditMode()
         }
 
         btnSelectAll.setOnClickListener {
@@ -119,57 +114,59 @@ class GalleryActivity :AppCompatActivity(),OnItemClickListener{
             mAdapter.notifyDataSetChanged()
 
             if(allChecked){
+                disableRename()
                 enableDelete()
+            }else {
                 disableRename()
-            }else{
                 disableDelete()
-                disableRename()
             }
         }
 
         btnDelete.setOnClickListener {
             val builder = AlertDialog.Builder(this)
-            builder.setTitle("Elimar grabacion?")
+            builder.setTitle("Delete record?")
             val nbRecords = records.count{it.isChecked}
-            builder.setMessage("Estas seguro que quieres borrar $nbRecords grabacion(es) ?")
-            builder.setPositiveButton("Eliminar"){_,_->
-                val toDelete = records.filter{it.isChecked}.toTypedArray()
+            builder.setMessage("Are you sure you want to delete $nbRecords record(s) ?")
+
+            builder.setPositiveButton("Delete") {_, _ ->
+                val toDelete = records.filter { it.isChecked }.toTypedArray()
                 GlobalScope.launch {
                     db.audioRecordDoc().delete(toDelete)
-                    runOnUiThread{
+                    runOnUiThread {
                         records.removeAll(toDelete)
                         mAdapter.notifyDataSetChanged()
                         leaveEditMode()
                     }
                 }
             }
-            builder.setNegativeButton("Cancelar"){_,_->
-                //it does nothing
+
+            builder.setNegativeButton("Cancel") {_, _ ->
+                // it does nothing
             }
+
             val dialog = builder.create()
             dialog.show()
         }
 
         btnRename.setOnClickListener {
             val builder = AlertDialog.Builder(this)
-            val dialogView = this.layoutInflater.inflate(R.layout.rename_layout,null)
+            val dialogView = this.layoutInflater.inflate(R.layout.rename_layout, null)
             builder.setView(dialogView)
             val dialog = builder.create()
 
             val record = records.filter { it.isChecked }.get(0)
-
             val textInput = dialogView.findViewById<TextInputEditText>(R.id.filenameInput)
             textInput.setText(record.filename)
 
-            dialogView.findViewById<Button>(R.id.btnSave).setOnClickListener{
+            dialogView.findViewById<Button>(R.id.btnSave).setOnClickListener {
                 val input = textInput.text.toString()
                 if(input.isEmpty()){
-                    Toast.makeText(this,"A name is required",Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, "A name is required", Toast.LENGTH_LONG).show()
                 }else{
                     record.filename = input
                     GlobalScope.launch {
                         db.audioRecordDoc().update(record)
-                        runOnUiThread{
+                        runOnUiThread {
                             mAdapter.notifyItemChanged(records.indexOf(record))
                             dialog.dismiss()
                             leaveEditMode()
@@ -178,56 +175,53 @@ class GalleryActivity :AppCompatActivity(),OnItemClickListener{
                 }
             }
 
-            dialogView.findViewById<Button>(R.id.btnCancel).setOnClickListener{
-                    dialog.dismiss()
+            dialogView.findViewById<Button>(R.id.btnCancel).setOnClickListener {
+                dialog.dismiss()
             }
 
             dialog.show()
-        }
 
+        }
     }
 
-    private fun leaveEditMode(){
+    private fun leaveEditMode () {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.setDisplayShowHomeEnabled(true)
 
         editBar.visibility = View.GONE
-
         bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
         bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
-        records.map{it.isChecked = false}
+
+        records.map { it.isChecked = false }
         mAdapter.setEditMode(false)
     }
 
-
-    private fun disableRename(){
+    private fun disableRename () {
         btnRename.isClickable = false
-        btnRename.backgroundTintList = ResourcesCompat.getColorStateList(resources,R.color.grayDarkDisabled,theme)
-        tvEdit.setTextColor(ResourcesCompat.getColorStateList(resources,R.color.grayDarkDisabled,theme))
+        btnRename.backgroundTintList = ResourcesCompat.getColorStateList(resources, R.color.grayDarkDisabled, theme)
+        tvEdit.setTextColor(ResourcesCompat.getColorStateList(resources, R.color.grayDarkDisabled, theme))
     }
-
-    private fun disableDelete(){
+    private fun disableDelete () {
         btnDelete.isClickable = false
-        btnDelete.backgroundTintList = ResourcesCompat.getColorStateList(resources,R.color.grayDarkDisabled,theme)
-        tvDelete.setTextColor(ResourcesCompat.getColorStateList(resources,R.color.grayDarkDisabled,theme))
+        btnDelete.backgroundTintList = ResourcesCompat.getColorStateList(resources, R.color.grayDarkDisabled, theme)
+        tvDelete.setTextColor(ResourcesCompat.getColorStateList(resources, R.color.grayDarkDisabled, theme))
     }
 
-    private fun enableRename(){
+    private fun enableRename () {
         btnRename.isClickable = true
-        btnRename.backgroundTintList = ResourcesCompat.getColorStateList(resources,R.color.azul,theme)
-        tvEdit.setTextColor(ResourcesCompat.getColorStateList(resources,R.color.azul,theme))
+        btnRename.backgroundTintList = ResourcesCompat.getColorStateList(resources, R.color.grayDark, theme)
+        tvEdit.setTextColor(ResourcesCompat.getColorStateList(resources, R.color.grayDark, theme))
     }
-
-    private fun enableDelete(){
+    private fun enableDelete () {
         btnDelete.isClickable = true
-        btnDelete.backgroundTintList = ResourcesCompat.getColorStateList(resources,R.color.red,theme)
-        tvDelete.setTextColor(ResourcesCompat.getColorStateList(resources,R.color.red,theme))
+        btnDelete.backgroundTintList = ResourcesCompat.getColorStateList(resources, R.color.grayDark, theme)
+        tvDelete.setTextColor(ResourcesCompat.getColorStateList(resources, R.color.grayDark, theme))
     }
 
     private fun searchDatabase(query: String) {
         GlobalScope.launch {
             records.clear()
-            var queryResult : List<AudioRecord> = db.audioRecordDoc().searchDatabase("%$query%")
+            var queryResult = db.audioRecordDoc().searchDatabase("%$query%")
             records.addAll(queryResult)
 
             runOnUiThread {
@@ -237,19 +231,21 @@ class GalleryActivity :AppCompatActivity(),OnItemClickListener{
         }
     }
 
-    private fun fetchALL(){
-            GlobalScope.launch {
-                records.clear()
-                var queryResult : List<AudioRecord> = db.audioRecordDoc().getAll()
-                val reversedRecords: List<AudioRecord> = queryResult.reversed()
-                records.addAll(reversedRecords)
 
-                mAdapter.notifyDataSetChanged()
-            }
+    private fun fetchAll(){
+        GlobalScope.launch {
+            records.clear()
+            var queryResult = db.audioRecordDoc().getAll()
+            val sortedRecords = queryResult.sortedByDescending { it.id }
+
+            records.addAll(sortedRecords)
+
+            mAdapter.notifyDataSetChanged()
         }
+    }
 
     override fun onItemClickListener(position: Int) {
-      var audioRecord = records[position]
+        var audioRecord = records[position]
 
         if(mAdapter.isEditMode()){
             records[position].isChecked = !records[position].isChecked
@@ -265,21 +261,18 @@ class GalleryActivity :AppCompatActivity(),OnItemClickListener{
                     enableDelete()
                     enableRename()
                 }
-                else->{
+                else -> {
                     disableRename()
                     enableDelete()
                 }
             }
         }else{
-            var intent = Intent(this,AudioPlayerActivity::class.java)
+            var intent = Intent(this, AudioPlayerActivity::class.java)
 
-            intent.putExtra("filepath",audioRecord.filePath)
-            intent.putExtra("filename",audioRecord.filename)
+            intent.putExtra("filepath", audioRecord.filePath)
+            intent.putExtra("filename", audioRecord.filename)
             startActivity(intent)
         }
-
-
-
     }
 
     override fun onItemLongClickListener(position: Int) {
@@ -291,7 +284,7 @@ class GalleryActivity :AppCompatActivity(),OnItemClickListener{
 
         if(mAdapter.isEditMode() && editBar.visibility == View.GONE){
             supportActionBar?.setDisplayHomeAsUpEnabled(false)
-            supportActionBar?.setDisplayHomeAsUpEnabled(false)
+            supportActionBar?.setDisplayShowHomeEnabled(false)
 
             editBar.visibility = View.VISIBLE
 
@@ -299,6 +292,4 @@ class GalleryActivity :AppCompatActivity(),OnItemClickListener{
             enableRename()
         }
     }
-
-
 }

@@ -108,8 +108,8 @@ class AudioPlayerActivity: AppCompatActivity() {
         }
 
 
-        
-  }
+
+    }
 
     private fun playPausePlayer() {
         if(!mediaPlayer.isPlaying){
@@ -134,9 +134,9 @@ class AudioPlayerActivity: AppCompatActivity() {
 
         seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
-               if(p2){
-                   mediaPlayer.seekTo(p1)
-               }
+                if(p2){
+                    mediaPlayer.seekTo(p1)
+                }
             }
 
             override fun onStartTrackingTouch(p0: SeekBar?) {}
